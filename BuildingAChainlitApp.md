@@ -1,28 +1,10 @@
----
-title: DeployPythonicRAG
-emoji: 📉
-colorFrom: blue
-colorTo: purple
-sdk: docker
-pinned: false
-license: apache-2.0
----
+# Building a Chainlit App
 
-# Deploying Pythonic Chat With Your Text File Application
+What if we want to take our Week 1 Day 2 assignment - [Pythonic RAG](https://github.com/AI-Maker-Space/AIE4/tree/main/Week%201/Day%202) - and bring it out of the notebook?
 
-In today's breakout rooms, we will be following the process that you saw during the challenge.
+Well - we'll cover exactly that here!
 
-Today, we will repeat the same process - but powered by our Pythonic RAG implementation we created last week. 
-
-You'll notice a few differences in the `app.py` logic - as well as a few changes to the `aimakerspace` package to get things working smoothly with Chainlit.
-
-> NOTE: If you want to run this locally - be sure to use `uv sync`, and then `uv run chainlit run app.py` to start the application outside of Docker.
-
-## Reference Diagram (It's Busy, but it works)
-
-![image](https://i.imgur.com/IaEVZG2.png)
-
-### Anatomy of a Chainlit Application
+## Anatomy of a Chainlit Application
 
 [Chainlit](https://docs.chainlit.io/get-started/overview) is a Python package similar to Streamlit that lets users write a backend and a front end in a single (or multiple) Python file(s). It is mainly used for prototyping LLM-based Chat Style Applications - though it is used in production in some settings with 1,000,000s of MAUs (Monthly Active Users).
 
@@ -38,7 +20,7 @@ We'll be concerning ourselves with three main scopes:
 
 Let's dig into each scope and see what we're doing!
 
-### On Application Start:
+## On Application Start:
 
 The first thing you'll notice is that we have the traditional "wall of imports" this is to ensure we have everything we need to run our application. 
 
@@ -130,45 +112,28 @@ text_splitter = CharacterTextSplitter()
 Now we can define our helper.
 
 ```python
-def process_file(file: AskFileResponse):
+def process_text_file(file: AskFileResponse):
     import tempfile
-    import shutil
-    
-    print(f"Processing file: {file.name}")
-    
-    # Create a temporary file with the correct extension
-    suffix = f".{file.name.split('.')[-1]}"
-    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
-        # Copy the uploaded file content to the temporary file
-        shutil.copyfile(file.path, temp_file.name)
-        print(f"Created temporary file at: {temp_file.name}")
-        
-        # Create appropriate loader
-        if file.name.lower().endswith('.pdf'):
-            loader = PDFLoader(temp_file.name)
-        else:
-            loader = TextFileLoader(temp_file.name)
-            
-        try:
-            # Load and process the documents
-            documents = loader.load_documents()
-            texts = text_splitter.split_texts(documents)
-            return texts
-        finally:
-            # Clean up the temporary file
-            try:
-                os.unlink(temp_file.name)
-            except Exception as e:
-                print(f"Error cleaning up temporary file: {e}")
+
+    with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".txt") as temp_file:
+        temp_file_path = temp_file.name
+
+    with open(temp_file_path, "wb") as f:
+        f.write(file.content)
+
+    text_loader = TextFileLoader(temp_file_path)
+    documents = text_loader.load_documents()
+    texts = text_splitter.split_texts(documents)
+    return texts
 ```
 
 Simply put, this downloads the file as a temp file, we load it in with `TextFileLoader` and then split it with our `TextSplitter`, and returns that list of strings!
 
-#### ❓ QUESTION #1:
+#### QUESTION #1:
 
 Why do we want to support streaming? What about streaming is important, or useful?
 
-### On Chat Start:
+## On Chat Start:
 
 The next scope is where "the magic happens". On Chat Start is when a user begins a chat session. This will happen whenever a user opens a new chat window, or refreshes an existing chat window.
 
@@ -177,8 +142,8 @@ You'll see that our code is set-up to immediately show the user a chat box reque
 ```python
 while files == None:
         files = await cl.AskFileMessage(
-            content="Please upload a Text or PDF file to begin!",
-            accept=["text/plain", "application/pdf"],
+            content="Please upload a Text File file to begin!",
+            accept=["text/plain"],
             max_size_mb=2,
             timeout=180,
         ).send()
@@ -206,11 +171,11 @@ Now, we'll save that into our user session!
 
 > NOTE: Chainlit has some great documentation about [User Session](https://docs.chainlit.io/concepts/user-session). 
 
-#### ❓ QUESTION #2: 
+### QUESTION #2: 
 
 Why are we using User Session here? What about Python makes us need to use this? Why not just store everything in a global variable?
 
-### On Message
+## On Message
 
 First, we load our chain from the user session:
 
@@ -228,117 +193,22 @@ async for stream_resp in result["response"]:
     await msg.stream_token(stream_resp)
 ```
 
-### 🎉
+## 🎉
 
 With that - you've created a Chainlit application that moves our Pythonic RAG notebook to a Chainlit application!
 
-## Deploying the Application to Hugging Face Space
-
-Due to the way the repository is created - it should be straightforward to deploy this to a Hugging Face Space!
-
-> NOTE: If you wish to go through the local deployments using `uv run chainlit run app.py` and Docker - please feel free to do so!
-
-<details>
-    <summary>Creating a Hugging Face Space</summary>
-
-1.  Navigate to the `Spaces` tab.
-
-![image](https://i.imgur.com/aSMlX2T.png)
-
-2. Click on `Create new Space`
-
-![image](https://i.imgur.com/YaSSy5p.png)
-
-3. Create the Space by providing values in the form. Make sure you've selected "Docker" as your Space SDK.
-
-![image](https://i.imgur.com/6h9CgH6.png)
-
-</details>
-
-<details>
-    <summary>Adding this Repository to the Newly Created Space</summary>
-
-1. Collect the SSH address from the newly created Space. 
-
-![image](https://i.imgur.com/Oag0m8E.png)
-
-> NOTE: The address is the component that starts with `git@hf.co:spaces/`.
-
-2. Use the command:
-
-```bash
-git remote add hf HF_SPACE_SSH_ADDRESS_HERE
-```
-
-3. Use the command:
-
-```bash
-git pull hf main --no-rebase --allow-unrelated-histories -X ours
-```
-
-4. Use the command: 
-
-```bash 
-git add .
-```
-
-5. Use the command:
-
-```bash
-git commit -m "Deploying Pythonic RAG"
-```
-
-6. Use the command: 
-
-```bash
-git push hf main
-```
-
-7. The Space should automatically build as soon as the push is completed!
-
-> NOTE: The build will fail before you complete the following steps!
-
-</details>
-
-<details>
-    <summary>Adding OpenAI Secrets to the Space</summary>
-
-1. Navigate to your Space settings.
-
-![image](https://i.imgur.com/zh0a2By.png)
-
-2. Navigate to `Variables and secrets` on the Settings page and click `New secret`: 
-
-![image](https://i.imgur.com/g2KlZdz.png)
-
-3. In the `Name` field - input `OPENAI_API_KEY` in the `Value (private)` field, put your OpenAI API Key.
-
-![image](https://i.imgur.com/eFcZ8U3.png)
-
-4. The Space will begin rebuilding!
-
-</details>
-
-## 🎉
-
-You just deployed Pythonic RAG!
-
-Try uploading a text file and asking some questions!
-
-#### ❓ Discussion Question #1:
-
-Upload a PDF file of the recent DeepSeek-R1 paper and ask the following questions:
-
-1. What is RL and how does it help reasoning?
-2. What is the difference between DeepSeek-R1 and DeepSeek-R1-Zero?
-3. What is this paper about?
-
-Does this application pass your vibe check? Are there any immediate pitfalls you're noticing?
-
 ## 🚧 CHALLENGE MODE 🚧
 
-For the challenge mode, please instead create a simple FastAPI backend with a simple React (or any other JS framework) frontend.
+For an extra challenge - modify the behaviour of your applciation by integrating changes you made to your Pythonic RAG notebook (using new retrieval methods, etc.)
 
-You can use the same prompt templates and RAG pipeline as we did here - but you'll need to modify the code to work with FastAPI and React.
+If you're still looking for a challenge, or didn't make any modifications to your Pythonic RAG notebook:
 
-Deploy this application to Hugging Face Spaces!
+1) Allow users to upload PDFs (this will require you to build a PDF parser as well)
+2) Modify the VectorStore to leverage [Qdrant](https://python-client.qdrant.tech/)
+
+> NOTE: The motivation for these challenges is simple - the beginning of the course is extremely information dense, and people come from all kinds of different technical backgrounds. In order to ensure that all learners are able to engage with the content confidently and comfortably, we want to focus on the basic units of technical competency required. This leads to a situation where some learners, who came in with more robust technical skills, find the introductory material to be too simple - and these open-ended challenges help us do this! 
+
+
+
+
+
