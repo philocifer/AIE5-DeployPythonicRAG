@@ -168,6 +168,34 @@ Simply put, this downloads the file as a temp file, we load it in with `TextFile
 
 Why do we want to support streaming? What about streaming is important, or useful?
 
+#### ✅ ANSWER:
+### Key Benefits of Streaming
+
+#### Real-time Feedback
+- Users receive responses **word by word**
+- Immediate visibility into response generation
+- More interactive user experience
+
+#### Enhanced User Experience
+- Creates perception of faster system responsiveness
+- Reduces perceived waiting time
+- More engaging interaction model
+
+#### Early Termination Control
+- Users can **interrupt** generation if response is off-track
+- Saves time and computing resources
+- Provides better user control
+
+#### Memory Efficiency
+- No need to store complete responses in memory
+- Handles large responses more effectively
+- Reduces server memory load
+
+#### Connection Management
+- Maintains active connections during long generations
+- Prevents timeouts on extended operations
+- Ensures reliable message delivery
+
 ### On Chat Start:
 
 The next scope is where "the magic happens". On Chat Start is when a user begins a chat session. This will happen whenever a user opens a new chat window, or refreshes an existing chat window.
@@ -209,6 +237,43 @@ Now, we'll save that into our user session!
 #### ❓ QUESTION #2: 
 
 Why are we using User Session here? What about Python makes us need to use this? Why not just store everything in a global variable?
+
+#### ✅ ANSWER:
+### Why Use User Sessions Instead of Global Variables
+
+#### Concurrency Issues:
+- Python web apps can handle multiple users simultaneously
+- Global variables would be shared across all users
+- Different users would overwrite each other's data
+
+#### State Management:
+- Each user needs their own conversation context
+- Sessions isolate user-specific data
+- Prevents cross-contamination between users
+
+#### Web Context:
+- Web applications are stateless by nature
+- Sessions maintain state between requests
+- Chainlit provides built-in session management
+
+Here's an example showing the problem with global variables:
+
+```python
+# BAD APPROACH - Using global
+global_chain = None
+
+# User 1 sets their chain
+global_chain = user1_chain  # Works fine
+
+# Meanwhile User 2 overwrites it
+global_chain = user2_chain  # Overwrites User 1's data!
+
+# GOOD APPROACH - Using sessions
+cl.user_session.set("chain", user1_chain)  # User 1's data
+cl.user_session.set("chain", user2_chain)  # Different user, different session
+```
+
+The session approach ensures each user gets their own isolated state, which is crucial for web applications.
 
 ### On Message
 
