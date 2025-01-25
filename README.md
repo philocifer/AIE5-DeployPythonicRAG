@@ -1,5 +1,5 @@
 ---
-title: DeployPythonicRAG
+title: Deploy Pythonic RAG
 emoji: 📉
 colorFrom: blue
 colorTo: purple
@@ -399,6 +399,50 @@ Upload a PDF file of the recent DeepSeek-R1 paper and ask the following question
 3. What is this paper about?
 
 Does this application pass your vibe check? Are there any immediate pitfalls you're noticing?
+
+#### ✅ ANSWER:
+
+### Analysis of RAG Responses
+
+#### Question 1: RL and Reasoning
+**Observed Pitfalls:**
+- Lacks specific details about the Group Relative Policy Optimization algorithm
+- Overgeneralizes RL's impact on reasoning capabilities
+- Missing concrete examples of how RL improves self-verification
+- Should explain the novel approach of using RL without initial supervised fine-tuning
+
+#### Question 2: DeepSeek-R1 vs R1-Zero Differences
+**Observed Pitfalls:**
+- Insufficient detail about training process differences
+- Vague comparisons with DeepSeek-V3
+- Missing explanation of specific challenges (readability, language mixing)
+- Needs clarity on the significance of the pure RL approach
+
+#### Question 3: Paper Overview
+**Critical Issues:**
+- System incorrectly responds with "I don't know"
+- Fails to utilize available context
+- Misses opportunity to summarize key findings and methodology
+- Demonstrates limitation in context processing
+
+### RAG System Assessment
+
+The application demonstrates several areas for improvement:
+
+1. **Context Processing:**
+   - Needs better chunk selection strategy
+   - Should improve relevance ranking
+   - May benefit from larger context window
+
+2. **Response Generation:**
+   - Lacks consistency in detail level
+   - Sometimes misses key information in context
+   - Could benefit from structured response templates
+
+3. **System Design:**
+   - Consider implementing fact verification
+   - Add citation tracking
+   - Implement confidence scoring
 
 ## 🚧 CHALLENGE MODE 🚧
 
